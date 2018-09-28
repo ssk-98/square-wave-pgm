@@ -1,0 +1,63 @@
+module square_wavegen 
+  (
+   i_clock,
+   i_enable,
+   i_switch_1,
+   o_clock_freq
+   );
+  input i_clock;
+  input i_enable;
+  input i_switch_1;
+  output o_clock_freq;
+    
+  // Constants (parameters) to create the frequencies needed:
+  // Input clock is 100 MHz, i.e of the chosen FPGA
+  // Formula is: (100 MHz / 600 Hz * 50% duty cycle) for 600hz frequency
+  // So for 1MHz: 100Mhz / 1Mhz* 0.5 = 49
+  parameter c_CNT_600HZ = 83334;
+  parameter c_CNT_1MHZ  = 49;
+  // These signals will be the counters:
+  reg [31:0] r_CNT_600HZ = 0;
+  reg [31:0] r_CNT_1MHZ = 0;
+  // These signals will toggle at the frequencies needed:
+  reg        r_TOGGLE_600HZ = 1'b0;
+  reg        r_TOGGLE_1MHZ  = 1'b0;
+  // One bit select
+  reg        r_CLOCK_SELECT;
+  wire       w_CLOCK_SELECT;
+
+begin
+  // All always blocks toggle a specific signal at a different frequency.
+  // They all run continuously even if the switches are
+  // not selecting their particular output. 
+  always @ (posedge i_clock)
+    begin
+      if (r_CNT_600HZ == c_CNT_600HZ-1) // -1, since counter starts at 0
+        begin        
+          r_TOGGLE_600HZ <= !r_TOGGLE_600HZ;
+          r_CNT_600HZ    <= 0;
+        end
+      else
+        r_CNT_600HZ <= r_CNT_600HZ + 1;
+    end
+  always @ (posedge i_clock)
+    begin
+      if (r_CNT_1MHZ == c_CNT_1MHZ-1) // -1, since counter starts at 0
+        begin        
+          r_TOGGLE_1MHZ <= !r_TOGGLE_1MHZ;
+          r_CNT_1MHZ    <= 0;
+        end
+      else
+        r_CNT_1MHZ <= r_CNT_1MHZ + 1;
+    end
+  // Create a multiplexer based on switch inputs
+  always @ (*)
+  begin
+    case (i_switch_1) 
+      1'b0 : r_CLOCK_SELECT <= r_TOGGLE_600HZ;
+      1'b1 : r_CLOCK_SELECT <= r_TOGGLE_1MHZ;
+    endcase     
+  end
+  assign o_clock_freq = r_CLOCK_SELECT & i_enable;
+end
+endmodule
