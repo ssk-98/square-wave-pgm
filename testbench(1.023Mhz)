@@ -1,0 +1,16 @@
+module tb();
+    reg i_clock,i_enable,i_switch_1;
+    wire o_clock_freq;
+    square_wavegen inst1 (.i_clock(i_clock),.i_enable(i_enable),.i_switch_1(i_enable),.o_clock_freq(o_clock_freq));
+    initial
+        i_clock = 1'b0;
+    always
+       #5  i_clock = ~i_clock;
+       initial
+       begin
+           i_enable = 1; i_switch_1 = 1;
+      end
+endmodule
+
+
+
